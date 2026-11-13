@@ -1,25 +1,26 @@
 <!DOCTYPE html>
-<html lang="pt-AO">
+<html lang="pt-AO" data-theme="neon">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Bug Shop Recargas | Recargas de Free Fire</title>
-<meta name="description" content="Faça sua recarga de Free Fire de forma simples e rápida. Escolha seus diamantes, informe seu ID e finalize pelo WhatsApp." />
-
-<meta property="og:title" content="Bug Shop Recargas | Recargas de Free Fire" />
-<meta property="og:description" content="Faça sua recarga de Free Fire de forma simples e rápida. Escolha seus diamantes, informe seu ID e finalize pelo WhatsApp." />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://bug-recargas.netlify.app/" />
-<meta property="og:image" content="https://bug-recargas.netlify.app/assets/logo.png" />
+<title>Bug Shop Recargas</title>
+<meta name="description" content="Recargas de Free Fire de forma simples e rápida." />
 
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
 <link rel="stylesheet" href="css/style.css" />
-<link rel="stylesheet" href="css/native.css" />
+<link rel="stylesheet" href="css/app.css" />
+<script>
+  /* aplica o tema guardado antes de pintar o ecrã */
+  try {
+    var __s = JSON.parse(localStorage.getItem("bugshop_settings") || "{}");
+    if (__s.theme) document.documentElement.setAttribute("data-theme", __s.theme);
+  } catch (e) {}
+</script>
 </head>
 <body>
 
@@ -29,148 +30,74 @@
   <span class="icon icon-spin" id="splashSpinner"></span>
 </div>
 
-<!-- HEADER -->
-<header class="site-header">
-  <div class="container">
-    <a href="#inicio" class="logo">
-      <img src="assets/logo.png" alt="Bug Shop Recargas" />
-      <span>BUG SHOP <span class="accent">RECARGAS</span></span>
-    </a>
-
-    <nav class="nav-desktop" aria-label="Navegação principal">
-      <ul>
-        <li><a href="#inicio">Início</a></li>
-        <li><a href="#diamantes">Diamantes</a></li>
-        <li><a href="#passe">Passe de Nível</a></li>
-        <li><a href="#como-funciona">Como funciona</a></li>
-        <li><a href="#faq">FAQ</a></li>
-      </ul>
-    </nav>
-
-    <div class="header-actions">
-      <a href="#produtos" class="btn btn-primary">Comprar agora</a>
-      <button class="icon-btn" id="hamburgerBtn" aria-label="Abrir menu" aria-expanded="false" aria-controls="navMobile"></button>
-    </div>
+<!-- BARRA SUPERIOR -->
+<header class="app-bar">
+  <div class="app-bar-brand">
+    <img src="assets/logo.png" alt="Bug Shop" />
+    <div class="app-bar-title"><strong>BUG SHOP</strong><span>Recargas</span></div>
   </div>
-
-  <nav class="nav-mobile" id="navMobile" aria-label="Navegação mobile">
-    <ul>
-      <li><a href="#inicio">Início</a></li>
-      <li><a href="#diamantes">Diamantes</a></li>
-      <li><a href="#passe">Passe de Nível</a></li>
-      <li><a href="#como-funciona">Como funciona</a></li>
-      <li><a href="#faq">FAQ</a></li>
-      <li><a href="#produtos" class="btn btn-primary btn-block">Comprar agora</a></li>
-    </ul>
-  </nav>
+  <a class="icon-btn" id="appHelpBtn" href="#" target="_blank" rel="noopener" aria-label="Ajuda pelo WhatsApp" data-icon="messageCircle"></a>
 </header>
 
-<main>
+<main class="app-main">
 
-  <!-- HERO -->
-  <section class="hero" id="inicio">
-    <div class="container">
-      <div class="hero-copy">
-        <span class="eyebrow">Loja independente de recargas</span>
-        <h1>Diamantes de Free Fire do jeito <span class="accent">mais simples</span>.</h1>
-        <p>Escolha sua recarga, informe seu ID e finalize o pedido pelo WhatsApp.</p>
-        <div class="hero-actions">
-          <a href="#produtos" class="btn btn-primary">Fazer recarga</a>
-          <a href="#como-funciona" class="btn btn-ghost">Como funciona</a>
-        </div>
-        <div class="hero-badges" id="heroBadges"></div>
+  <!-- ===================== INÍCIO ===================== -->
+  <section class="screen active" id="screen-home" data-screen="home">
+
+    <div class="home-hero">
+      <span class="eyebrow">Loja independente de recargas</span>
+      <h1>Diamantes de Free Fire do jeito <span class="accent">mais simples</span>.</h1>
+      <p>Escolhe a recarga, confere o teu ID e finaliza pelo WhatsApp.</p>
+      <div class="hero-badges" id="heroBadges"></div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-mock-card">
+        <div class="mock-row"><span class="mock-amount" id="mockAmount"></span></div>
+        <div class="mock-row"><span class="mock-price" id="mockPrice"></span></div>
+        <button class="mock-btn" id="mockBuyBtn" type="button">Comprar</button>
       </div>
-
-      <div class="hero-visual">
-        <div class="hero-mock-card">
-          <div class="mock-row">
-            <span class="mock-amount" id="mockAmount"></span>
-          </div>
-          <div class="mock-row">
-            <span class="mock-price" id="mockPrice"></span>
-          </div>
-          <button class="mock-btn" id="mockBuyBtn" type="button">Comprar</button>
-        </div>
-        <div class="hero-mock-meta">
-          <span>Pagamento via WhatsApp</span>
-          <span>Entrega manual</span>
-        </div>
+      <div class="hero-mock-meta">
+        <span>Pagamento via WhatsApp</span>
+        <span>Entrega manual</span>
       </div>
     </div>
-  </section>
 
-  <!-- CONTADOR DE COMPRAS -->
-  <section class="section counter-section">
-    <div class="container">
-      <div class="counter-card">
-        <div class="counter-icon-wrap" id="counterIconWrap"></div>
-        <div class="counter-text">
-          <span class="counter-value" id="purchaseCounterValue">—</span>
-          <span class="counter-label">recargas já pedidas pelo site</span>
-        </div>
+    <div class="counter-card">
+      <div class="counter-icon-wrap" id="counterIconWrap"></div>
+      <div class="counter-text">
+        <span class="counter-value" id="purchaseCounterValue">—</span>
+        <span class="counter-label">recargas já pedidas</span>
       </div>
     </div>
-  </section>
 
-  <!-- COMO FUNCIONA -->
-  <section class="section" id="como-funciona">
-    <div class="container">
-      <div class="section-head">
-        <span class="eyebrow">Passo a passo</span>
-        <h2>Como funciona</h2>
-        <p>Do pedido ao WhatsApp em menos de um minuto.</p>
+    <!-- MEUS IDS -->
+    <section class="block" id="myIdsBlock">
+      <div class="block-head">
+        <h2>Meus IDs</h2>
+        <button class="link-btn" id="manageIdsBtn" type="button">Gerir</button>
       </div>
+      <div class="id-chips" id="myIdsRow"></div>
+    </section>
 
-      <div class="steps">
-        <div class="step">
-          <span class="step-index">01</span>
-          <h3>Escolha sua recarga</h3>
-          <p>Selecione a quantidade de diamantes ou o Passe de Nível.</p>
-        </div>
-        <div class="step">
-          <span class="step-index">02</span>
-          <h3>Informe seu ID</h3>
-          <p>Digite corretamente o ID da sua conta Free Fire e confira o Nick.</p>
-        </div>
-        <div class="step">
-          <span class="step-index">03</span>
-          <h3>Confirme o pedido</h3>
-          <p>Confira o produto e o preço antes de continuar.</p>
-        </div>
-        <div class="step">
-          <span class="step-index">04</span>
-          <h3>Finalize pelo WhatsApp</h3>
-          <p>Você será direcionado para o WhatsApp para concluir o pagamento e receber sua recarga.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PROMOÇÕES ATIVAS (criadas no painel admin) -->
-  <section class="section promo-events-section hidden" id="promoEventsSection">
-    <div class="container">
+    <!-- PROMOÇÕES ATIVAS (criadas no painel admin) -->
+    <section class="section promo-events-section block hidden" id="promoEventsSection">
       <div class="section-head">
         <span class="eyebrow">Por tempo limitado</span>
         <h2>Promoções ativas</h2>
       </div>
       <div class="promo-events-grid" id="promoEventsGrid"></div>
-    </div>
-  </section>
+    </section>
 
-  <!-- SALINHA (criada no painel admin) -->
-  <section class="section salinha-section hidden" id="salinhaSection">
-    <div class="container">
+    <!-- SALINHA (criada no painel admin) -->
+    <section class="section salinha-section block hidden" id="salinhaSection">
       <div class="salinha-grid" id="salinhaGrid"></div>
-    </div>
-  </section>
+    </section>
 
-  <!-- PRODUTOS -->
-  <section class="section section-alt" id="produtos">
-    <div class="container">
-      <div class="section-head">
-        <span class="eyebrow">Catálogo</span>
-        <h2>Escolha sua recarga</h2>
-        <p>Preços em Kwanzas (Kz). Aos finais de semana, alguns itens do Passe de Nível entram em promoção automaticamente.</p>
+    <!-- PRODUTOS -->
+    <section class="block" id="produtos">
+      <div class="block-head">
+        <h2>Escolhe a tua recarga</h2>
       </div>
 
       <div class="category-tabs" role="tablist">
@@ -186,118 +113,124 @@
         <p class="passe-note">Preços exclusivos para quem já tem o Passe de Nível ativo. A recarga de 350 diamantes entra em promoção automaticamente aos sábados e domingos.</p>
         <div class="product-grid" id="grid-passe"></div>
       </div>
+      <p class="price-note">Preços em Kwanzas (Kz).</p>
+    </section>
+  </section>
+
+  <!-- ===================== HISTÓRICO ===================== -->
+  <section class="screen" id="screen-history" data-screen="history">
+    <div class="screen-head">
+      <h1 class="screen-title">Histórico</h1>
+      <button class="link-btn hidden" id="historyClearBtn" type="button">Limpar</button>
+    </div>
+    <p class="screen-sub">As tuas últimas recargas, guardadas só neste aparelho.</p>
+    <ul class="history-list" id="historyList"></ul>
+    <div class="empty-state" id="historyEmpty">
+      <div class="empty-icon" data-icon="history"></div>
+      <strong>Ainda sem recargas</strong>
+      <p>Quando fizeres um pedido, ele aparece aqui e podes repeti-lo com um toque.</p>
+      <button class="btn btn-primary" type="button" data-go-products>Fazer a primeira recarga</button>
     </div>
   </section>
 
-  <!-- CONFIANÇA -->
-  <section class="section">
-    <div class="container">
-      <div class="section-head">
-        <span class="eyebrow">Por que a Bug Shop Recargas</span>
-        <h2>Feito para ser rápido e seguro</h2>
-      </div>
+  <!-- ===================== DEFINIÇÕES ===================== -->
+  <section class="screen" id="screen-settings" data-screen="settings">
+    <h1 class="screen-title">Definições</h1>
 
-      <div class="trust-grid" id="trustGrid"></div>
+    <div class="card group">
+      <h2 class="group-title" data-icon="palette">Aparência</h2>
+      <p class="group-label">Estilo do app</p>
+      <div class="theme-grid" id="themeGrid"></div>
+      <p class="group-label">Cor de destaque</p>
+      <div class="accent-row" id="accentRow"></div>
     </div>
-  </section>
 
-  <!-- HISTÓRICO LOCAL -->
-  <section class="history-section hidden" id="historySection">
-    <div class="container">
-      <div class="section-head">
-        <span class="eyebrow">Neste aparelho</span>
-        <h2>Suas últimas recargas</h2>
+    <div class="card group">
+      <h2 class="group-title" data-icon="volume">Som e vibração</h2>
+      <div class="setting-row">
+        <div class="setting-text"><strong>Vibração</strong><span>Pequena vibração ao tocar</span></div>
+        <button class="switch" id="toggleHaptics" type="button" role="switch" aria-checked="true" aria-label="Vibração"><span></span></button>
       </div>
-      <ul class="history-list" id="historyList"></ul>
+      <div class="setting-row">
+        <div class="setting-text"><strong>Sons</strong><span>Sons suaves nas ações</span></div>
+        <button class="switch" id="toggleSound" type="button" role="switch" aria-checked="false" aria-label="Sons"><span></span></button>
+      </div>
     </div>
-  </section>
 
-  <!-- FAQ -->
-  <section class="section section-alt" id="faq">
-    <div class="container">
-      <div class="section-head">
-        <span class="eyebrow">Dúvidas</span>
-        <h2>Perguntas frequentes</h2>
-      </div>
+    <div class="card group">
+      <h2 class="group-title" data-icon="idCard">Meus IDs</h2>
+      <button class="row-btn" id="openIdsSheetBtn" type="button">
+        <span class="row-text"><strong>Gerir IDs guardados</strong><small id="idsCount">Nenhum</small></span>
+        <span class="chev" data-icon="chevronRight"></span>
+      </button>
+    </div>
 
+    <div class="card group">
+      <h2 class="group-title" data-icon="shieldCheck">Dados do app</h2>
+      <button class="row-btn" id="clearHistoryBtn" type="button">
+        <span class="row-text"><strong>Limpar histórico</strong><small>Apaga as recargas listadas neste aparelho</small></span>
+        <span class="chev" data-icon="trash"></span>
+      </button>
+      <button class="row-btn danger" id="clearAllBtn" type="button">
+        <span class="row-text"><strong>Apagar todos os dados</strong><small>Histórico, Meus IDs e definições</small></span>
+        <span class="chev" data-icon="trash"></span>
+      </button>
+    </div>
+
+    <div class="card group">
+      <h2 class="group-title" data-icon="messageCircle">Contacto e ajuda</h2>
+      <a class="row-btn" id="settingsWhatsapp" href="#" target="_blank" rel="noopener">
+        <span class="row-text"><strong>Falar no WhatsApp</strong><small>Atendimento da Bug Shop Recargas</small></span>
+        <span class="chev" data-icon="chevronRight"></span>
+      </a>
+      <button class="row-btn" id="replayOnboardingBtn" type="button">
+        <span class="row-text"><strong>Ver boas-vindas</strong><small>Rever a introdução do app</small></span>
+        <span class="chev" data-icon="sparkles"></span>
+      </button>
+    </div>
+
+    <div class="card group">
+      <h2 class="group-title" data-icon="helpCircle">Perguntas frequentes</h2>
       <div class="faq-list">
         <div class="faq-item">
-          <button class="faq-question"><span>Como faço uma recarga?</span><span class="icon"></span></button>
-          <div class="faq-answer"><p>Escolha o produto, informe seu ID e finalize o pedido pelo WhatsApp.</p></div>
+          <button class="faq-question" type="button"><span>Como faço uma recarga?</span><span class="icon"></span></button>
+          <div class="faq-answer"><p>Escolhe o produto, informa o teu ID, confere o Nick e finaliza o pedido pelo WhatsApp.</p></div>
         </div>
         <div class="faq-item">
-          <button class="faq-question"><span>Preciso fornecer minha senha?</span><span class="icon"></span></button>
-          <div class="faq-answer"><p>Não. Nunca solicitamos a senha da sua conta Free Fire.</p></div>
+          <button class="faq-question" type="button"><span>Preciso de dar a minha senha?</span><span class="icon"></span></button>
+          <div class="faq-answer"><p>Não. Nunca pedimos a senha da tua conta Free Fire.</p></div>
         </div>
         <div class="faq-item">
-          <button class="faq-question"><span>Como o site sabe o meu Nick?</span><span class="icon"></span></button>
-          <div class="faq-answer"><p>Ao digitar o ID, consultamos um serviço público de informações do Free Fire para mostrar o Nick correspondente — assim você confirma que o ID está certo antes de comprar.</p></div>
+          <button class="faq-question" type="button"><span>Como o app sabe o meu Nick?</span><span class="icon"></span></button>
+          <div class="faq-answer"><p>Ao digitares o ID, consultamos um serviço público de informações do Free Fire para mostrar o Nick correspondente — assim confirmas que o ID está certo antes de comprar.</p></div>
         </div>
         <div class="faq-item">
-          <button class="faq-question"><span>Onde encontro meu ID?</span><span class="icon"></span></button>
-          <div class="faq-answer"><p>Abra o Free Fire, toque no seu avatar no canto superior esquerdo: o ID aparece logo abaixo do seu nome de jogador.</p></div>
+          <button class="faq-question" type="button"><span>Onde encontro o meu ID?</span><span class="icon"></span></button>
+          <div class="faq-answer"><p>Abre o Free Fire e toca no teu avatar no canto superior esquerdo: o ID aparece logo abaixo do teu nome de jogador.</p></div>
         </div>
         <div class="faq-item">
-          <button class="faq-question"><span>Como faço o pagamento?</span><span class="icon"></span></button>
+          <button class="faq-question" type="button"><span>Como faço o pagamento?</span><span class="icon"></span></button>
           <div class="faq-answer"><p>O pagamento é combinado diretamente durante o atendimento pelo WhatsApp.</p></div>
         </div>
         <div class="faq-item">
-          <button class="faq-question"><span>Quando recebo minha recarga?</span><span class="icon"></span></button>
-          <div class="faq-answer"><p>O prazo depende da confirmação do pagamento e do processamento manual do pedido pela nossa equipe.</p></div>
+          <button class="faq-question" type="button"><span>Quando recebo a minha recarga?</span><span class="icon"></span></button>
+          <div class="faq-answer"><p>O prazo depende da confirmação do pagamento e do processamento manual do pedido pela nossa equipa.</p></div>
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- CTA FINAL -->
-  <section class="cta-final">
-    <div class="container">
-      <h2>Pronto para recarregar?</h2>
-      <p>Escolha seu pacote e finalize o pedido em poucos segundos.</p>
-      <a href="#produtos" class="btn btn-primary">Ver recargas</a>
-    </div>
+    <p class="app-about">Bug Shop Recargas · versão <span id="appVersion">2.0.0</span><br />
+      Loja independente de recargas, sem vínculo oficial com a Garena.</p>
   </section>
 
 </main>
 
-<!-- FOOTER -->
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <a href="#inicio" class="logo">
-          <img src="assets/logo.png" alt="Bug Shop Recargas" />
-          <span>BUG SHOP <span class="accent">RECARGAS</span></span>
-        </a>
-        <p>Recargas de Free Fire de forma simples e rápida.</p>
-      </div>
-      <div class="footer-links">
-        <h4>Navegação</h4>
-        <ul>
-          <li><a href="#inicio">Início</a></li>
-          <li><a href="#produtos">Produtos</a></li>
-          <li><a href="#como-funciona">Como funciona</a></li>
-          <li><a href="#faq">FAQ</a></li>
-        </ul>
-      </div>
-      <div class="footer-links">
-        <h4>Contato</h4>
-        <ul>
-          <li><a href="https://wa.me/244951129314" target="_blank" rel="noopener" id="footerWhatsapp">WhatsApp</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>Bug Shop Recargas é uma loja independente de recargas e não possui vínculo oficial com a Garena.</p>
-      <p>© 2026 Bug Shop Recargas. Todos os direitos reservados.</p>
-    </div>
-  </div>
-</footer>
-
-<!-- BOTÃO FLUTUANTE DE AJUDA -->
-<a href="https://wa.me/244951129314?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20um%20pedido." target="_blank" rel="noopener" class="help-fab" aria-label="Pedir ajuda pelo WhatsApp" id="helpFab">
-  <span class="label">Ajuda</span>
-</a>
+<!-- BARRA DE NAVEGAÇÃO -->
+<nav class="bottom-nav" aria-label="Navegação principal">
+  <button class="nav-item active" type="button" data-nav="home" data-icon="home"><span>Início</span></button>
+  <button class="nav-item" type="button" data-nav="history" data-icon="history"><span>Histórico</span></button>
+  <button class="nav-item" type="button" data-nav="settings" data-icon="sliders"><span>Definições</span></button>
+</nav>
 
 <!-- MODAL DE CHECKOUT -->
 <div class="modal-overlay" id="modalOverlay">
@@ -314,8 +247,10 @@
       <div class="row total"><span>Preço</span><strong id="summaryPrice">—</strong></div>
     </div>
 
+    <div class="id-chips modal-chips hidden" id="modalIdChips"></div>
+
     <div class="field">
-      <label for="playerIdInput">Digite o ID da sua conta Free Fire</label>
+      <label for="playerIdInput">Digita o ID da tua conta Free Fire</label>
       <div class="field-row">
         <input type="text" inputmode="numeric" id="playerIdInput" placeholder="Ex: 123456789" autocomplete="off" />
         <button class="nickname-check-btn" id="checkNickBtn" type="button">Ver Nick</button>
@@ -343,15 +278,83 @@
       <button class="icon-btn hidden" id="removeCouponBtn" type="button" aria-label="Remover cupão"></button>
     </div>
 
+    <label class="confirm-row save-id-row hidden" id="saveIdRow">
+      <input type="checkbox" id="saveIdCheckbox" checked />
+      <span>Guardar este ID em Meus IDs</span>
+    </label>
+
     <label class="confirm-row" id="confirmRow">
       <input type="checkbox" id="confirmCheckbox" />
-      <span>Confirmo que revisei o produto, o preço e o ID acima.</span>
+      <span>Confirmo que revi o produto, o preço e o ID acima.</span>
     </label>
 
     <div class="modal-actions">
       <button class="btn btn-primary btn-block" id="continueWhatsappBtn" disabled>Continuar pelo WhatsApp</button>
       <button class="btn btn-ghost btn-block" id="cancelBtn">Cancelar</button>
     </div>
+  </div>
+</div>
+
+<!-- FOLHA: MEUS IDS -->
+<div class="modal-overlay" id="idsOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="idsTitle">
+    <div class="modal-head">
+      <h3 id="idsTitle">Meus IDs</h3>
+      <button class="icon-btn" id="idsCloseBtn" type="button" aria-label="Fechar" data-icon="x"></button>
+    </div>
+    <p class="sheet-hint">Guarda os teus IDs e escolhe o ativo: ele já vem preenchido quando fores recarregar.</p>
+    <ul class="ids-list" id="idsList"></ul>
+    <p class="ids-empty hidden" id="idsEmpty">Ainda não guardaste nenhum ID.</p>
+
+    <div class="field">
+      <label for="newIdValue">Novo ID</label>
+      <input type="text" inputmode="numeric" id="newIdValue" placeholder="Ex: 123456789" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label for="newIdLabel">Apelido (opcional)</label>
+      <input type="text" id="newIdLabel" maxlength="20" placeholder="Ex: Conta principal" autocomplete="off" />
+    </div>
+    <p class="field-error" id="newIdError"></p>
+    <button class="btn btn-primary btn-block" id="addIdBtn" type="button" data-icon="plus">Guardar ID</button>
+  </div>
+</div>
+
+<!-- CONFIRMAÇÃO -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h3 id="confirmTitle">Confirmar</h3>
+    <p id="confirmText"></p>
+    <div class="modal-actions">
+      <button class="btn btn-primary btn-block" id="confirmOk" type="button">Confirmar</button>
+      <button class="btn btn-ghost btn-block" id="confirmCancel" type="button">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOAS-VINDAS (primeira vez) -->
+<div class="onboarding hidden" id="onboarding">
+  <div class="onb-top"><button class="link-btn" id="onbSkip" type="button">Saltar</button></div>
+  <div class="onb-slides">
+    <div class="onb-slide active">
+      <img class="onb-logo" src="assets/logo.png" alt="Bug Shop" />
+      <h2>Bem-vindo à Bug Shop Recargas</h2>
+      <p>Diamantes e Passe de Nível de Free Fire, com o pedido finalizado pelo WhatsApp.</p>
+    </div>
+    <div class="onb-slide">
+      <div class="onb-icon" data-icon="idCard"></div>
+      <h2>Guarda os teus IDs</h2>
+      <p>Salva um ou mais IDs em <strong>Meus IDs</strong> e recarrega mais rápido. Nunca pedimos a tua senha.</p>
+    </div>
+    <div class="onb-slide">
+      <h2>Escolhe o teu estilo</h2>
+      <p>Podes mudar quando quiseres nas Definições.</p>
+      <div class="theme-grid" id="onbThemeGrid"></div>
+      <div class="accent-row" id="onbAccentRow"></div>
+    </div>
+  </div>
+  <div class="onb-footer">
+    <div class="onb-dots" id="onbDots"></div>
+    <button class="btn btn-primary" id="onbNext" type="button">Seguinte</button>
   </div>
 </div>
 
@@ -378,5 +381,6 @@
 <script type="module" src="js/script.js"></script>
 <script type="module" src="js/counter.js"></script>
 <script type="module" src="js/events.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
