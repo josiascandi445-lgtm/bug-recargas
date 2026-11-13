@@ -8,6 +8,10 @@ import { icon } from "./icons.js";
 import { showToast } from "./toast.js";
 import { initConnectivityWatcher } from "./connectivity.js";
 import { addToHistory, renderHistory } from "./history.js";
+import { getMyIds, getActiveId, setActiveId, saveMyId, findMyId, updateMyIdNick } from "./myids.js";
+import { haptic, playSound } from "./feedback.js";
+import { registerOverlay, unregisterOverlay } from "./overlays.js";
+import { escapeHtml } from "./utils/html.js";
 
 initConnectivityWatcher();
 renderHistory();
@@ -16,11 +20,8 @@ renderHistory();
    ÍCONES ESTÁTICOS (elementos que não mudam depois de montados)
 --------------------------------------------------------- */
 document.getElementById("splashSpinner").innerHTML = icon("loader");
-document.getElementById("hamburgerBtn").innerHTML = icon("menu");
 document.getElementById("modalCloseBtn").innerHTML = icon("x");
 document.getElementById("copyIdBtn").innerHTML = icon("copy");
-document.getElementById("helpFab").innerHTML = icon("messageCircle") + '<span class="label">Ajuda</span>';
-document.getElementById("footerWhatsapp").innerHTML = icon("messageCircle") + "WhatsApp";
 
 document.getElementById("heroBadges").innerHTML = `
   <span>${icon("shieldCheck")} Sem senha da conta</span>
@@ -33,21 +34,7 @@ document.getElementById("counterIconWrap").innerHTML = icon("zap");
 document.getElementById("tab-diamantes").innerHTML = `${icon("gem")} Diamantes`;
 document.getElementById("tab-passe").innerHTML = `${icon("ticket")} Passe de Nível`;
 
-document.getElementById("trustGrid").innerHTML = [
-  { i: "zap", t: "Atendimento rápido", d: "Pedidos tratados diretamente pelo WhatsApp." },
-  { i: "shieldCheck", t: "Processo seguro", d: "Nunca solicitamos senha da sua conta." },
-  { i: "smartphone", t: "Atendimento pelo WhatsApp", d: "Finalize seu pedido diretamente com a Bug Shop Recargas." },
-  { i: "gamepad", t: "Feito para jogadores", d: "Recargas simples e rápidas para Free Fire." },
-]
-  .map(
-    (c) => `
-    <div class="trust-card">
-      <div class="icon-wrap">${icon(c.i)}</div>
-      <h3>${c.t}</h3>
-      <p>${c.d}</p>
-    </div>`
-  )
-  .join("");
+
 
 document.querySelectorAll(".faq-question .icon").forEach((el) => {
   el.innerHTML = icon("chevronDown");
@@ -92,26 +79,6 @@ if (heroDiamondProducts.length) {
     }, 5000);
   }
 }
-
-/* ---------------------------------------------------------
-   MENU MOBILE
---------------------------------------------------------- */
-const hamburgerBtn = document.getElementById("hamburgerBtn");
-const navMobile = document.getElementById("navMobile");
-
-hamburgerBtn.addEventListener("click", () => {
-  const isOpen = navMobile.classList.toggle("open");
-  hamburgerBtn.innerHTML = icon(isOpen ? "x" : "menu");
-  hamburgerBtn.setAttribute("aria-expanded", String(isOpen));
-});
-
-navMobile.querySelectorAll("a").forEach((link) => {
-  link.addEventListener("click", () => {
-    navMobile.classList.remove("open");
-    hamburgerBtn.innerHTML = icon("menu");
-    hamburgerBtn.setAttribute("aria-expanded", "false");
-  });
-});
 
 /* ---------------------------------------------------------
    RENDERIZAÇÃO DOS PRODUTOS
@@ -176,17 +143,6 @@ tabs.forEach((tab) => {
   });
 });
 
-/* Links do menu ("Diamantes" / "Passe de Nível") abrem a aba certa e rolam até lá */
-document.querySelectorAll('a[href="#diamantes"], a[href="#passe"]').forEach((link) => {
-  link.addEventListener("click", (event) => {
-    event.preventDefault();
-    const category = link.getAttribute("href").slice(1);
-    const targetTab = document.getElementById(`tab-${category}`);
-    if (targetTab) targetTab.click();
-    document.getElementById("produtos").scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-});
-
 /* ---------------------------------------------------------
    CHECKOUT (MODAL)
 --------------------------------------------------------- */
@@ -214,6 +170,9 @@ const summaryDiscount = document.getElementById("summaryDiscount");
 const summaryProduct = document.getElementById("summaryProduct");
 const summaryAmount = document.getElementById("summaryAmount");
 const summaryPrice = document.getElementById("summaryPrice");
+const modalIdChips = document.getElementById("modalIdChips");
+const saveIdRow = document.getElementById("saveIdRow");
+const saveIdCheckbox = document.getElementById("saveIdCheckbox");
 
 let currentProduct = null;
 let currentPriceInfo = null;
@@ -260,7 +219,54 @@ function updateContinueButtonState() {
 
 confirmCheckbox.addEventListener("change", updateContinueButtonState);
 
-export function openModal(product, priceInfoOverride) {
+function showKnownNickname(nick) {
+  currentNickname = nick;
+  nicknameResultIcon.innerHTML = icon("checkCircle");
+  nicknameValue.textContent = nick;
+  nicknameResult.classList.remove("error");
+  nicknameResult.classList.add("visible", "success");
+  copyIdBtn.classList.remove("hidden");
+}
+
+/* Meus IDs: atalhos dentro do checkout */
+function renderModalChips() {
+  const ids = getMyIds();
+  if (!ids.length) {
+    modalIdChips.classList.add("hidden");
+    modalIdChips.innerHTML = "";
+    return;
+  }
+  modalIdChips.classList.remove("hidden");
+  modalIdChips.innerHTML = ids
+    .map(
+      (item) => `
+      <button type="button" class="id-chip small" data-modal-chip="${escapeHtml(item.id)}">
+        <strong>${escapeHtml(item.label || item.nick || "Jogador")}</strong>
+        <small>${escapeHtml(item.id)}</small>
+      </button>`
+    )
+    .join("");
+}
+
+function updateSaveIdRow() {
+  const id = playerIdInput.value.trim();
+  const show = /^\d{5,12}$/.test(id) && !findMyId(id);
+  saveIdRow.classList.toggle("hidden", !show);
+}
+
+modalIdChips.addEventListener("click", (event) => {
+  const chip = event.target.closest("[data-modal-chip]");
+  if (!chip) return;
+  const id = chip.dataset.modalChip;
+  const item = findMyId(id);
+  playerIdInput.value = id;
+  playerIdError.textContent = "";
+  resetNicknameState();
+  if (item && item.nick) showKnownNickname(item.nick);
+  updateSaveIdRow();
+});
+
+export function openModal(product, priceInfoOverride, options = {}) {
   currentProduct = product;
   currentPriceInfo = priceInfoOverride || getProductPrice(product);
 
@@ -269,16 +275,24 @@ export function openModal(product, priceInfoOverride) {
   resetCouponState();
   updateSummaryPrice();
 
-  playerIdInput.value = "";
+  const prefillId = (options && options.playerId) || getActiveId() || "";
+  playerIdInput.value = prefillId;
   playerIdError.textContent = "";
   resetNicknameState();
+  const knownItem = prefillId ? findMyId(prefillId) : null;
+  if (knownItem && knownItem.nick) showKnownNickname(knownItem.nick);
+  renderModalChips();
+  saveIdCheckbox.checked = true;
+  updateSaveIdRow();
   confirmCheckbox.checked = false;
   updateContinueButtonState();
   continueWhatsappBtn.innerHTML = "Continuar pelo WhatsApp";
 
   modalOverlay.classList.add("open");
   document.body.classList.add("no-scroll");
-  playerIdInput.focus();
+  registerOverlay(closeModal);
+  haptic("light");
+  if (!prefillId) playerIdInput.focus();
 
   // Começa a "acordar" os servidores de consulta de Nick assim que o
   // modal abre, ganhando tempo antes do cliente clicar em "Ver Nick".
@@ -286,6 +300,7 @@ export function openModal(product, priceInfoOverride) {
 }
 
 function closeModal() {
+  unregisterOverlay(closeModal);
   modalOverlay.classList.remove("open");
   document.body.classList.remove("no-scroll");
   currentProduct = null;
@@ -335,6 +350,7 @@ checkNickBtn.addEventListener("click", async () => {
   try {
     const nickname = await fetchNickname(result.value, handleRetry);
     currentNickname = nickname;
+    updateMyIdNick(result.value, nickname);
     nicknameResultIcon.innerHTML = icon("checkCircle");
     nicknameValue.textContent = nickname;
     nicknameResult.classList.remove("error");
@@ -409,6 +425,7 @@ removeCouponBtn.addEventListener("click", () => {
 playerIdInput.addEventListener("input", () => {
   if (playerIdError.textContent) playerIdError.textContent = "";
   if (currentNickname) resetNicknameState();
+  updateSaveIdRow();
 });
 
 continueWhatsappBtn.addEventListener("click", async () => {
@@ -433,11 +450,27 @@ continueWhatsappBtn.addEventListener("click", async () => {
 
   continueWhatsappBtn.innerHTML = `${icon("check")} Pedido enviado`;
   showToast("Pedido enviado! Finalize no WhatsApp.", "success");
+  haptic("success");
+  playSound("success");
+
+  if (!saveIdRow.classList.contains("hidden") && saveIdCheckbox.checked) {
+    const saved = saveMyId({ id: result.value, nick: currentNickname });
+    if (saved.ok) {
+      setActiveId(result.value);
+      showToast("ID guardado em Meus IDs", "success", 2200);
+    } else {
+      showToast("Limite de 10 IDs atingido. Remove um em Meus IDs.", "info", 3500);
+    }
+  } else if (findMyId(result.value)) {
+    updateMyIdNick(result.value, currentNickname);
+    setActiveId(result.value);
+  }
 
   addToHistory({
     amountLabel: currentProduct.amountLabel,
     priceLabel: formatKz(finalPrice),
     playerId: result.value,
+    productId: currentProduct.id,
   });
 
   bumpCounterDisplay();
@@ -474,4 +507,17 @@ document.querySelectorAll(".faq-item").forEach((item) => {
     document.querySelectorAll(".faq-item").forEach((i) => i.classList.remove("open"));
     if (!wasOpen) item.classList.add("open");
   });
+});
+
+/* ---------------------------------------------------------
+   REPETIR PEDIDO (botão "Repetir" no Histórico)
+--------------------------------------------------------- */
+document.addEventListener("app:repeat-order", (event) => {
+  const { productId, playerId } = event.detail || {};
+  const product = productId ? getProductById(productId) : null;
+  if (!product) {
+    showToast("Este pedido não pode ser repetido automaticamente.", "info");
+    return;
+  }
+  openModal(product, undefined, { playerId });
 });
