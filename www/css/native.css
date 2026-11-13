@@ -1,0 +1,13 @@
+/* Margens seguras (barra de estado / navegação) — só dentro do app */
+:root.is-native {
+  --sat: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --sab: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --sal: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --sar: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+}
+.is-native body { padding-left: var(--sal); padding-right: var(--sar); padding-bottom: var(--sab); }
+.is-native .site-header { padding-top: var(--sat); }
+.is-native .offline-banner { padding-top: var(--sat); }
+.is-native .help-fab { bottom: calc(18px + var(--sab)); }
+.is-native .toast-container { bottom: calc(16px + var(--sab)); }
+.is-native .modal-overlay { padding-top: var(--sat); padding-bottom: var(--sab); }
