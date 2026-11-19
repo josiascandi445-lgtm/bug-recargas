@@ -40,7 +40,7 @@ export async function incrementPurchaseCount() {
    Isto é uma ADIÇÃO — não substitui o contador acima, que
    continua a funcionar exatamente como antes.
 --------------------------------------------------------- */
-export async function logPurchase({ playerId, nickname, productName, amountLabel, category, price, couponCode }) {
+export async function logPurchase({ playerId, nickname, productName, amountLabel, category, price, couponCode, userId, userName, productId }) {
   await addDoc(collection(db, "purchases"), {
     playerId: playerId || null,
     nickname: nickname || null,
@@ -49,6 +49,9 @@ export async function logPurchase({ playerId, nickname, productName, amountLabel
     category: category || null,
     price: typeof price === "number" ? price : 0,
     couponCode: couponCode || null,
+    userId: userId || null,
+    userName: userName || null,
+    productId: productId || null,
     status: "pendente",
     createdAt: serverTimestamp(),
   });
