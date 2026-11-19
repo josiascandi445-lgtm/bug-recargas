@@ -32,11 +32,20 @@
 
 <!-- BARRA SUPERIOR -->
 <header class="app-bar">
-  <div class="app-bar-brand">
-    <img src="assets/logo.png" alt="Bug Shop" />
-    <div class="app-bar-title"><strong>BUG SHOP</strong><span>Recargas</span></div>
+  <button class="user-chip" id="userChip" type="button" aria-label="Abrir o meu perfil">
+    <span class="avatar" id="barAvatar"></span>
+    <span class="user-chip-text">
+      <strong class="bar-name" id="barName"></strong>
+      <span class="user-chip-meta">
+        <span class="level-pill" id="barLevel"></span>
+        <span class="bar-points" id="barPoints"></span>
+      </span>
+    </span>
+  </button>
+  <div class="app-bar-actions">
+    <button class="icon-btn bell" id="bellBtn" type="button" aria-label="Notificações"></button>
+    <a class="icon-btn" id="appHelpBtn" href="#" target="_blank" rel="noopener" aria-label="Ajuda pelo WhatsApp" data-icon="messageCircle"></a>
   </div>
-  <a class="icon-btn" id="appHelpBtn" href="#" target="_blank" rel="noopener" aria-label="Ajuda pelo WhatsApp" data-icon="messageCircle"></a>
 </header>
 
 <main class="app-main">
@@ -45,7 +54,7 @@
   <section class="screen active" id="screen-home" data-screen="home">
 
     <div class="home-hero">
-      <span class="eyebrow">Loja independente de recargas</span>
+      <span class="eyebrow">Bug Shop Recargas</span>
       <h1>Diamantes de Free Fire do jeito <span class="accent">mais simples</span>.</h1>
       <p>Escolhe a recarga, confere o teu ID e finaliza pelo WhatsApp.</p>
       <div class="hero-badges" id="heroBadges"></div>
@@ -120,10 +129,9 @@
   <!-- ===================== HISTÓRICO ===================== -->
   <section class="screen" id="screen-history" data-screen="history">
     <div class="screen-head">
-      <h1 class="screen-title">Histórico</h1>
-      <button class="link-btn hidden" id="historyClearBtn" type="button">Limpar</button>
+      <h1 class="screen-title">Pedidos</h1>
     </div>
-    <p class="screen-sub">As tuas últimas recargas, guardadas só neste aparelho.</p>
+    <p class="screen-sub">Os teus pedidos ficam guardados na tua conta, com o estado e os pontos de cada um.</p>
     <ul class="history-list" id="historyList"></ul>
     <div class="empty-state" id="historyEmpty">
       <div class="empty-icon" data-icon="history"></div>
@@ -131,6 +139,49 @@
       <p>Quando fizeres um pedido, ele aparece aqui e podes repeti-lo com um toque.</p>
       <button class="btn btn-primary" type="button" data-go-products>Fazer a primeira recarga</button>
     </div>
+  </section>
+
+  <!-- ===================== PERFIL ===================== -->
+  <section class="screen" id="screen-profile" data-screen="profile">
+    <div class="profile-card">
+      <div class="profile-cover" id="profileCover"></div>
+      <div class="profile-head">
+        <span class="avatar xl" id="profileAvatar"></span>
+        <div class="profile-id">
+          <h1 class="profile-name" id="profileName"></h1>
+          <p class="profile-sub" id="profileSub"></p>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="editProfileBtn" type="button" data-icon="edit">Editar</button>
+      </div>
+      <div class="profile-stats">
+        <div><strong id="statPoints">0</strong><span>Pontos</span></div>
+        <div><strong id="statLevel">1</strong><span>Nível</span></div>
+        <div><strong id="statOrders">0</strong><span>Pedidos</span></div>
+      </div>
+    </div>
+
+    <div class="card progress-card" id="progressCard"></div>
+    <div class="card rewards-card" id="rewardsCard"></div>
+
+    <div class="card levels-card">
+      <div class="card-head"><h2 data-icon="trophy">Níveis e benefícios</h2></div>
+      <div id="levelsList"></div>
+    </div>
+
+    <div class="card earn-card">
+      <div class="card-head"><h2 data-icon="zap">Como ganhar pontos</h2></div>
+      <ul class="earn-list">
+        <li><span class="earn-pts">200</span><span>pontos por compra abaixo de 1.000 Kz</span></li>
+        <li><span class="earn-pts">250</span><span>pontos por compra a partir de 1.000 Kz</span></li>
+        <li><span class="earn-pts gift" data-icon="gift"></span><span>presentes de pontos enviados pela Bug Shop</span></li>
+      </ul>
+      <p class="earn-note">Os pontos entram quando o teu pedido é marcado como concluído.</p>
+    </div>
+
+    <button class="row-btn danger standalone" id="logoutBtn" type="button">
+      <span class="row-text"><strong>Terminar sessão</strong><small>Sair desta conta neste aparelho</small></span>
+      <span class="chev" data-icon="logOut"></span>
+    </button>
   </section>
 
   <!-- ===================== DEFINIÇÕES ===================== -->
@@ -166,13 +217,9 @@
     </div>
 
     <div class="card group">
-      <h2 class="group-title" data-icon="shieldCheck">Dados do app</h2>
-      <button class="row-btn" id="clearHistoryBtn" type="button">
-        <span class="row-text"><strong>Limpar histórico</strong><small>Apaga as recargas listadas neste aparelho</small></span>
-        <span class="chev" data-icon="trash"></span>
-      </button>
+      <h2 class="group-title" data-icon="shieldCheck">Dados do aparelho</h2>
       <button class="row-btn danger" id="clearAllBtn" type="button">
-        <span class="row-text"><strong>Apagar todos os dados</strong><small>Histórico, Meus IDs e definições</small></span>
+        <span class="row-text"><strong>Limpar dados do aparelho</strong><small>Meus IDs e definições (a conta não é afetada)</small></span>
         <span class="chev" data-icon="trash"></span>
       </button>
     </div>
@@ -228,7 +275,8 @@
 <!-- BARRA DE NAVEGAÇÃO -->
 <nav class="bottom-nav" aria-label="Navegação principal">
   <button class="nav-item active" type="button" data-nav="home" data-icon="home"><span>Início</span></button>
-  <button class="nav-item" type="button" data-nav="history" data-icon="history"><span>Histórico</span></button>
+  <button class="nav-item" type="button" data-nav="history" data-icon="history"><span>Pedidos</span></button>
+  <button class="nav-item" type="button" data-nav="profile" data-icon="user"><span>Perfil</span></button>
   <button class="nav-item" type="button" data-nav="settings" data-icon="sliders"><span>Definições</span></button>
 </nav>
 
@@ -245,6 +293,7 @@
       <div class="row"><span>Quantidade</span><strong id="summaryAmount">—</strong></div>
       <div class="row hidden" id="summaryDiscountRow"><span>Desconto (cupão)</span><strong id="summaryDiscount">—</strong></div>
       <div class="row total"><span>Preço</span><strong id="summaryPrice">—</strong></div>
+      <div class="row points-row"><span>Pontos ao concluir</span><strong id="summaryPoints">—</strong></div>
     </div>
 
     <div class="id-chips modal-chips hidden" id="modalIdChips"></div>
@@ -331,6 +380,127 @@
   </div>
 </div>
 
+<!-- RESULTADO (sucesso / aviso) -->
+<div class="modal-overlay" id="resultOverlay">
+  <div class="modal confirm-modal result-modal" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="result-icon" id="resultIcon"></div>
+    <h3 id="resultTitle"></h3>
+    <p id="resultText"></p>
+    <div class="modal-actions">
+      <button class="btn btn-primary btn-block" id="resultPrimary" type="button">Entendi</button>
+      <button class="btn btn-ghost btn-block hidden" id="resultSecondary" type="button"></button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICAÇÕES -->
+<div class="sheet-full" id="notifOverlay">
+  <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="notifTitle">
+    <div class="sheet-bar">
+      <h2 id="notifTitle">Notificações</h2>
+      <button class="icon-btn" id="notifClose" type="button" aria-label="Fechar" data-icon="x"></button>
+    </div>
+    <div class="notif-list" id="notifList"></div>
+    <div class="empty-state hidden" id="notifEmpty">
+      <div class="empty-icon" data-icon="bell"></div>
+      <strong>Sem notificações</strong>
+      <p>Presentes, pedidos de recompensa e avisos da Bug Shop aparecem aqui.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ENTRAR / CRIAR CONTA -->
+<div class="gate-screen auth-screen" id="authScreen">
+  <div class="gate-inner">
+    <div class="auth-brand">
+      <img src="assets/logo.png" alt="Bug Shop" />
+      <span>BUG SHOP <b>RECARGAS</b></span>
+    </div>
+    <h1 id="authTitle">Bem-vindo de volta</h1>
+    <p class="gate-sub" id="authSub"></p>
+
+    <div class="auth-tabs" role="tablist">
+      <button type="button" class="active" data-auth-tab="login">Entrar</button>
+      <button type="button" data-auth-tab="register">Criar conta</button>
+    </div>
+
+    <form id="authForm" novalidate>
+      <div class="field">
+        <label for="authEmail">E-mail</label>
+        <input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="o-teu@email.com" />
+      </div>
+      <div class="field">
+        <label for="authPassword">Senha</label>
+        <div class="pw-wrap">
+          <input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres" />
+          <button type="button" class="icon-btn" id="pwToggle" aria-label="Mostrar senha"></button>
+        </div>
+      </div>
+      <div class="field hidden" id="authConfirmField">
+        <label for="authConfirm">Confirmar senha</label>
+        <input id="authConfirm" type="password" autocomplete="new-password" />
+      </div>
+      <p class="field-error" id="authError"></p>
+      <button class="btn btn-primary btn-block" id="authSubmit" type="submit">Entrar</button>
+      <button class="link-btn center" id="forgotBtn" type="button">Esqueci a senha</button>
+
+      <div class="auth-divider hidden" id="googleDivider"><span>ou</span></div>
+      <button class="btn btn-ghost btn-block hidden" id="googleBtn" type="button">Continuar com Google</button>
+    </form>
+  </div>
+</div>
+
+<!-- QUASE LÁ: PERFIL -->
+<div class="gate-screen setup-screen" id="setupScreen">
+  <div class="gate-inner">
+    <div class="setup-top">
+      <span class="eyebrow" id="setupStep">Quase lá</span>
+      <button class="icon-btn hidden" id="setupClose" type="button" aria-label="Fechar"></button>
+    </div>
+    <h1 id="setupTitle">Configura o teu perfil</h1>
+    <p class="gate-sub" id="setupSub"></p>
+
+    <div class="setup-media">
+      <div class="setup-cover" id="setupCover">
+        <button class="pick-btn" id="coverPick" type="button"></button>
+      </div>
+      <div class="setup-avatar-wrap">
+        <span class="avatar xl" id="setupAvatar"></span>
+        <button class="avatar-edit" id="avatarPick" type="button" aria-label="Escolher foto de perfil"></button>
+      </div>
+    </div>
+    <input type="file" id="coverFile" accept="image/*" hidden />
+    <input type="file" id="avatarFile" accept="image/*" hidden />
+
+    <div class="field">
+      <label for="setupFfId">ID do Free Fire</label>
+      <div class="field-row">
+        <input id="setupFfId" type="text" inputmode="numeric" autocomplete="off" placeholder="Ex: 123456789" />
+        <button class="nickname-check-btn" id="setupFetchNick" type="button">Buscar Nick</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="setupNick">Nick (o nome que aparece no app)</label>
+      <input id="setupNick" type="text" maxlength="20" autocomplete="off" placeholder="O teu nick" />
+    </div>
+    <p class="field-error" id="setupError"></p>
+    <button class="btn btn-primary btn-block" id="setupSave" type="button">Concluir e entrar</button>
+    <button class="link-btn center" id="setupLogout" type="button">Usar outra conta</button>
+  </div>
+</div>
+
+<!-- CONTA SUSPENSA -->
+<div class="gate-screen banned-screen" id="bannedScreen">
+  <div class="gate-inner center-text">
+    <div class="result-icon tone-warn" data-icon="ban"></div>
+    <h1 id="bannedTitle">Conta suspensa</h1>
+    <p class="gate-sub" id="bannedText"></p>
+    <p class="banned-reason hidden" id="bannedReason"></p>
+    <a class="btn btn-primary btn-block" id="bannedWhatsapp" href="#" target="_blank" rel="noopener">Falar com o suporte</a>
+    <button class="btn btn-ghost btn-block" id="bannedLogout" type="button">Terminar sessão</button>
+  </div>
+</div>
+
 <!-- BOAS-VINDAS (primeira vez) -->
 <div class="onboarding hidden" id="onboarding">
   <div class="onb-top"><button class="link-btn" id="onbSkip" type="button">Saltar</button></div>
@@ -343,7 +513,7 @@
     <div class="onb-slide">
       <div class="onb-icon" data-icon="idCard"></div>
       <h2>Guarda os teus IDs</h2>
-      <p>Salva um ou mais IDs em <strong>Meus IDs</strong> e recarrega mais rápido. Nunca pedimos a tua senha.</p>
+      <p>Salva um ou mais IDs em <strong>Meus IDs</strong> e recarrega mais rápido. Ganha pontos em cada recarga e sobe de nível. Nunca pedimos a tua senha.</p>
     </div>
     <div class="onb-slide">
       <h2>Escolhe o teu estilo</h2>
@@ -358,24 +528,7 @@
   </div>
 </div>
 
-<script>
-  // Esconde o splash assim que a página carregar (com um tempo mínimo
-  // curto, para não "piscar" em conexões muito rápidas).
-  var __splashStart = Date.now();
-  window.addEventListener("load", function () {
-    var elapsed = Date.now() - __splashStart;
-    var wait = Math.max(0, 350 - elapsed);
-    setTimeout(function () {
-      var el = document.getElementById("loadingSplash");
-      if (el) el.classList.add("hidden-splash");
-    }, wait);
-  });
-  // Fallback: nunca deixa o splash preso por mais de 2.5s.
-  setTimeout(function () {
-    var el = document.getElementById("loadingSplash");
-    if (el) el.classList.add("hidden-splash");
-  }, 2500);
-</script>
+
 
 <script src="js/native.js"></script>
 <script type="module" src="js/script.js"></script>
