@@ -12,6 +12,8 @@ import { getMyIds, getActiveId, setActiveId, saveMyId, findMyId, updateMyIdNick 
 import { haptic, playSound } from "./feedback.js";
 import { registerOverlay, unregisterOverlay } from "./overlays.js";
 import { escapeHtml } from "./utils/html.js";
+import { session } from "./session.js";
+import { pointsForPrice } from "./levels.js";
 
 initConnectivityWatcher();
 renderHistory();
@@ -93,13 +95,15 @@ function renderProductCard(product) {
   const promoTag = priceInfo.onPromotion
     ? `<span class="promo-tag">${icon("flame")} Promoção de fim de semana</span>`
     : "";
-  const bonusTag = product.bonus ? `<span class="bonus">+${product.bonus} bônus</span>` : "";
+  const bonusTag = product.bonus ? `<span class="bonus">+${product.bonus.toLocaleString("pt-PT")} bónus</span>` : "";
+  const big = product.baseAmount ? product.baseAmount.toLocaleString("pt-PT") : "Ativação";
+  const unit = product.baseAmount ? "Diamantes" : "Passe de Nível";
   const oldPrice = priceInfo.onPromotion ? `<span class="price-old">${formatKz(priceInfo.originalPrice)}</span>` : "";
 
   card.innerHTML = `
     ${promoTag}
-    <span class="amount">${icon(categoryIcon)} ${product.amountLabel}</span>
-    ${bonusTag}
+    <div class="pc-top"><span class="pc-icon">${icon(categoryIcon)}</span>${bonusTag}</div>
+    <div class="pc-amount"><strong>${big}</strong><span>${unit}</span></div>
     <div class="price-row">
       ${oldPrice}
       <span class="price-final ${priceInfo.onPromotion ? "promo" : ""}">${formatKz(priceInfo.finalPrice)}</span>
@@ -170,6 +174,7 @@ const summaryDiscount = document.getElementById("summaryDiscount");
 const summaryProduct = document.getElementById("summaryProduct");
 const summaryAmount = document.getElementById("summaryAmount");
 const summaryPrice = document.getElementById("summaryPrice");
+const summaryPoints = document.getElementById("summaryPoints");
 const modalIdChips = document.getElementById("modalIdChips");
 const saveIdRow = document.getElementById("saveIdRow");
 const saveIdCheckbox = document.getElementById("saveIdCheckbox");
@@ -187,6 +192,7 @@ function effectiveFinalPrice() {
 
 function updateSummaryPrice() {
   summaryPrice.textContent = formatKz(effectiveFinalPrice());
+  summaryPoints.textContent = `+${pointsForPrice(effectiveFinalPrice())} pts`;
   if (appliedCoupon) {
     summaryDiscount.textContent = `-${formatKz(appliedCoupon.discountKz)}`;
     summaryDiscountRow.classList.remove("hidden");
@@ -275,12 +281,14 @@ export function openModal(product, priceInfoOverride, options = {}) {
   resetCouponState();
   updateSummaryPrice();
 
-  const prefillId = (options && options.playerId) || getActiveId() || "";
+  const profile = session.profile;
+  const prefillId = (options && options.playerId) || getActiveId() || (profile && profile.ffId) || "";
   playerIdInput.value = prefillId;
   playerIdError.textContent = "";
   resetNicknameState();
   const knownItem = prefillId ? findMyId(prefillId) : null;
   if (knownItem && knownItem.nick) showKnownNickname(knownItem.nick);
+  else if (profile && prefillId && prefillId === profile.ffId && profile.nick) showKnownNickname(profile.nick);
   renderModalChips();
   saveIdCheckbox.checked = true;
   updateSaveIdRow();
@@ -490,6 +498,9 @@ continueWhatsappBtn.addEventListener("click", async () => {
     category: currentProduct.category,
     price: finalPrice,
     couponCode: appliedCoupon ? appliedCoupon.code : null,
+    userId: session.user ? session.user.uid : null,
+    userName: session.profile ? session.profile.nick || session.profile.displayName || null : null,
+    productId: currentProduct.id,
   }).catch(() => {
     /* não bloqueia o pedido — só não entra no painel admin desta vez */
   });

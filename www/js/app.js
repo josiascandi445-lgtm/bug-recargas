@@ -1,6 +1,6 @@
 /**
- * APP — navegação, temas, definições, Meus IDs e boas-vindas.
- * (A lógica de compra/checkout continua em script.js.)
+ * APP — estado (login/perfil), navegação, temas, definições, Meus IDs e boas-vindas.
+ * (A compra/checkout continua em script.js.)
  */
 import { icon } from "./icons.js";
 import { getSettings, updateSettings, resetSettings } from "./settings.js";
@@ -9,20 +9,22 @@ import { haptic, playSound } from "./feedback.js";
 import {
   getMyIds, getActiveId, setActiveId, saveMyId, removeMyId, updateMyIdNick, clearMyIds, displayName, MAX_IDS,
 } from "./myids.js";
-import { renderHistory, clearHistory } from "./history.js";
+import { renderHistory } from "./history.js";
 import { showToast } from "./toast.js";
 import { validatePlayerId, WHATSAPP_NUMBER } from "./utils/whatsapp.js";
 import { fetchNickname } from "./utils/nickname.js";
 import { escapeHtml } from "./utils/html.js";
 import { registerOverlay, unregisterOverlay, closeTopOverlay } from "./overlays.js";
 import { KEYS, readRaw, writeRaw, removeKey } from "./storage.js";
+import { session, banStatus, logout } from "./session.js";
+import { askConfirm } from "./dialogs.js";
+import { initAuthUI, openSetup } from "./auth-ui.js";
+import { initProfile, renderTopBar, renderProfile } from "./profile.js";
+import { initNotifications, renderNotifications } from "./notifications.js";
 
 const $ = (id) => document.getElementById(id);
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "3.0.0";
 
-/* ---------------------------------------------------------
-   ÍCONES ESTÁTICOS + LINKS
---------------------------------------------------------- */
 function hydrateIcons() {
   document.querySelectorAll("[data-icon]").forEach((el) => {
     if (el.dataset.iconDone) return;
@@ -37,7 +39,7 @@ $("settingsWhatsapp").href = whatsappHelpLink;
 $("appVersion").textContent = APP_VERSION;
 
 /* ---------------------------------------------------------
-   NAVEGAÇÃO (barra de baixo)
+   NAVEGAÇÃO
 --------------------------------------------------------- */
 const navItems = document.querySelectorAll(".bottom-nav [data-nav]");
 const screenEls = document.querySelectorAll(".screen");
@@ -54,21 +56,94 @@ function showScreen(name) {
   });
   window.scrollTo(0, 0);
   if (name === "history") renderHistory();
+  if (name === "profile") renderProfile();
 }
 
-navItems.forEach((btn) => {
+navItems.forEach((btn) =>
   btn.addEventListener("click", () => {
     if (btn.dataset.nav !== currentScreen) playSound("tap");
     showScreen(btn.dataset.nav);
-  });
-});
-
-document.querySelectorAll("[data-go-products]").forEach((btn) => {
+  })
+);
+$("userChip").addEventListener("click", () => showScreen("profile"));
+document.querySelectorAll("[data-go-products]").forEach((btn) =>
   btn.addEventListener("click", () => {
     showScreen("home");
     $("produtos").scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+  })
+);
+
+/* ---------------------------------------------------------
+   ESTADO DA SESSÃO (carregar / entrar / configurar / suspenso / app)
+--------------------------------------------------------- */
+let lastState = "";
+let banTimer = null;
+let bootGuard = null;
+
+function renderBanned(ban) {
+  $("bannedTitle").textContent = ban.permanent ? "Conta suspensa" : "Conta suspensa temporariamente";
+  const tick = () => {
+    if (ban.permanent) {
+      $("bannedText").textContent = "O acesso desta conta foi suspenso. Fala com o suporte se achas que foi um engano.";
+      return;
+    }
+    const ms = Math.max(0, ban.until.getTime() - Date.now());
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    $("bannedText").textContent = `Voltas a ter acesso em ${h}h ${String(m).padStart(2, "0")}min. Se achas que foi um engano, fala com o suporte.`;
+  };
+  tick();
+  $("bannedReason").textContent = ban.reason ? `Motivo: ${ban.reason}` : "";
+  $("bannedReason").classList.toggle("hidden", !ban.reason);
+  if (banTimer) clearInterval(banTimer);
+  banTimer = setInterval(() => {
+    tick();
+    if (!ban.permanent && ban.until.getTime() <= Date.now()) applyState();
+  }, 30000);
+}
+
+function applyState() {
+  const root = document.documentElement;
+  let state;
+
+  if (!session.ready) state = "loading";
+  else if (!session.user) state = "auth";
+  else if (!session.profile) state = session.error ? "auth" : "loading";
+  else if (banStatus(session.profile).banned) state = "banned";
+  else if (!session.profile.setupDone) state = "setup";
+  else state = "app";
+
+  ["loading", "auth", "setup", "banned", "app"].forEach((s) => root.classList.toggle(`state-${s}`, s === state));
+  $("loadingSplash").classList.toggle("hidden-splash", state !== "loading");
+
+  if (state === "banned") renderBanned(banStatus(session.profile));
+  if (state === "setup" && lastState !== "setup") openSetup("first");
+  if (state === "app" && lastState !== "app") {
+    showScreen("home");
+    renderTopBar();
+    renderProfile();
+    renderNotifications();
+  }
+  if (state === "auth" && session.error && !session.profile) {
+    $("authError").innerHTML = `${icon("alertCircle")} Não foi possível carregar a tua conta. Verifica a ligação e tenta de novo.`;
+  }
+  lastState = state;
+}
+
+document.addEventListener("session:changed", applyState);
+bootGuard = setTimeout(() => {
+  if (!session.ready) {
+    session.ready = true;
+    applyState();
+  }
+}, 9000);
+
+$("logoutBtn").addEventListener("click", async () => {
+  const ok = await askConfirm({ title: "Terminar sessão?", text: "Vais precisar de entrar outra vez para ver o teu perfil e os teus pontos.", okLabel: "Sair" });
+  if (ok) await logout();
 });
+$("bannedLogout").addEventListener("click", () => logout());
+$("bannedWhatsapp").href = whatsappHelpLink;
 
 /* ---------------------------------------------------------
    APARÊNCIA: TEMAS E COR DE DESTAQUE
@@ -88,17 +163,10 @@ function themeTileHTML(theme, selected) {
 }
 
 function accentRowHTML(settings) {
-  const auto = `
-    <button type="button" class="accent-dot auto${!settings.accent ? " selected" : ""}" data-accent="" aria-label="Cor do estilo">
-      ${icon("sparkles")}
-    </button>`;
+  const auto = `<button type="button" class="accent-dot auto${!settings.accent ? " selected" : ""}" data-accent="" aria-label="Cor do estilo">${icon("sparkles")}</button>`;
   const dots = ACCENTS.map((a) => {
     const selected = settings.accent === a.color;
-    return `
-      <button type="button" class="accent-dot${selected ? " selected" : ""}" data-accent="${a.color}"
-        style="background:${a.color};color:${readableOn(a.color)}" aria-label="${a.name}">
-        ${selected ? icon("check") : ""}
-      </button>`;
+    return `<button type="button" class="accent-dot${selected ? " selected" : ""}" data-accent="${a.color}" style="background:${a.color};color:${readableOn(a.color)}" aria-label="${a.name}">${selected ? icon("check") : ""}</button>`;
   }).join("");
   return auto + dots;
 }
@@ -149,12 +217,7 @@ function bindToggle(id, key) {
 bindToggle("toggleHaptics", "haptics");
 bindToggle("toggleSound", "sound");
 
-/* ---------------------------------------------------------
-   FAQ (acordeão nas Definições)
---------------------------------------------------------- */
-document.querySelectorAll(".faq-question .icon").forEach((el) => {
-  el.innerHTML = icon("chevronDown");
-});
+document.querySelectorAll(".faq-question .icon").forEach((el) => (el.innerHTML = icon("chevronDown")));
 
 /* ---------------------------------------------------------
    MEUS IDS
@@ -178,8 +241,7 @@ function renderMyIds() {
         <small>ID ${escapeHtml(item.id)}</small>
       </button>`
       )
-      .join("") +
-    `<button type="button" class="id-chip id-chip-add" id="addIdChip">${icon("plus")}<span>Adicionar</span></button>`;
+      .join("") + `<button type="button" class="id-chip id-chip-add" id="addIdChip">${icon("plus")}<span>Adicionar</span></button>`;
 
   $("idsCount").textContent = ids.length ? `${ids.length} guardado${ids.length > 1 ? "s" : ""}` : "Nenhum guardado";
 
@@ -202,10 +264,7 @@ function renderMyIds() {
 }
 
 $("myIdsRow").addEventListener("click", (event) => {
-  if (event.target.closest("#addIdChip")) {
-    openIdsSheet(true);
-    return;
-  }
+  if (event.target.closest("#addIdChip")) return openIdsSheet(true);
   const chip = event.target.closest("[data-chip-id]");
   if (!chip) return;
   const id = chip.dataset.chipId;
@@ -234,7 +293,6 @@ function openIdsSheet(focusInput = false) {
   registerOverlay(closeIdsSheet);
   if (focusInput) setTimeout(() => newIdValue.focus(), 250);
 }
-
 function closeIdsSheet() {
   unregisterOverlay(closeIdsSheet);
   idsOverlay.classList.remove("open");
@@ -267,78 +325,24 @@ $("addIdBtn").addEventListener("click", () => {
   newIdError.textContent = "";
   haptic("success");
   showToast(saved.existed ? "ID atualizado" : "ID guardado", "success", 1800);
-
-  // procura o Nick em segundo plano (se falhar, o ID continua guardado)
-  fetchNickname(result.value)
-    .then((nick) => updateMyIdNick(result.value, nick))
-    .catch(() => {});
+  fetchNickname(result.value).then((nick) => updateMyIdNick(result.value, nick)).catch(() => {});
 });
 
 document.addEventListener("app:myids-changed", renderMyIds);
 
-/* ---------------------------------------------------------
-   CONFIRMAÇÃO (ações que apagam dados)
---------------------------------------------------------- */
-const confirmOverlay = $("confirmOverlay");
-
-function askConfirm({ title, text, okLabel = "Confirmar", danger = false }) {
-  return new Promise((resolve) => {
-    $("confirmTitle").textContent = title;
-    $("confirmText").textContent = text;
-    const ok = $("confirmOk");
-    const cancel = $("confirmCancel");
-    ok.textContent = okLabel;
-    ok.classList.toggle("btn-danger", danger);
-
-    const finish = (value) => {
-      unregisterOverlay(onBack);
-      confirmOverlay.classList.remove("open");
-      ok.onclick = null;
-      cancel.onclick = null;
-      confirmOverlay.onclick = null;
-      resolve(value);
-    };
-    const onBack = () => finish(false);
-
-    ok.onclick = () => finish(true);
-    cancel.onclick = () => finish(false);
-    confirmOverlay.onclick = (event) => {
-      if (event.target === confirmOverlay) finish(false);
-    };
-    registerOverlay(onBack);
-    confirmOverlay.classList.add("open");
-  });
-}
-
-async function confirmClearHistory() {
+$("clearAllBtn").addEventListener("click", async () => {
   const ok = await askConfirm({
-    title: "Limpar histórico?",
-    text: "As recargas listadas neste aparelho serão apagadas. Os pedidos já enviados não são afetados.",
+    title: "Limpar dados do aparelho?",
+    text: "Vai apagar os Meus IDs e as definições deste aparelho (tema, cor, sons). A tua conta, os teus pontos e o teu histórico não são afetados.",
     okLabel: "Limpar",
     danger: true,
   });
   if (!ok) return;
-  clearHistory();
-  haptic("success");
-  showToast("Histórico limpo", "success", 1800);
-}
-$("clearHistoryBtn").addEventListener("click", confirmClearHistory);
-$("historyClearBtn").addEventListener("click", confirmClearHistory);
-
-$("clearAllBtn").addEventListener("click", async () => {
-  const ok = await askConfirm({
-    title: "Apagar todos os dados?",
-    text: "Vai apagar o histórico, os Meus IDs e as tuas definições neste aparelho. Esta ação não pode ser desfeita.",
-    okLabel: "Apagar tudo",
-    danger: true,
-  });
-  if (!ok) return;
-  clearHistory();
   clearMyIds();
   resetSettings();
   removeKey(KEYS.onboarded);
   haptic("success");
-  showToast("Dados apagados", "success", 2000);
+  showToast("Dados do aparelho limpos", "success", 2000);
 });
 
 /* ---------------------------------------------------------
@@ -353,35 +357,29 @@ function renderOnboarding() {
   $("onbDots").innerHTML = onbSlides.map((_, i) => `<span class="${i === onbIndex ? "on" : ""}"></span>`).join("");
   $("onbNext").textContent = onbIndex === onbSlides.length - 1 ? "Começar" : "Seguinte";
 }
-
 function onboardingBack() {
   if (onbIndex > 0) {
     onbIndex -= 1;
     renderOnboarding();
   }
 }
-
 function openOnboarding() {
   onbIndex = 0;
   renderOnboarding();
   onboarding.classList.remove("hidden");
   registerOverlay(onboardingBack);
 }
-
 function finishOnboarding() {
   writeRaw(KEYS.onboarded, "1");
   onboarding.classList.add("hidden");
   unregisterOverlay(onboardingBack);
   haptic("success");
 }
-
 $("onbNext").addEventListener("click", () => {
   if (onbIndex < onbSlides.length - 1) {
     onbIndex += 1;
     renderOnboarding();
-  } else {
-    finishOnboarding();
-  }
+  } else finishOnboarding();
 });
 $("onbSkip").addEventListener("click", finishOnboarding);
 $("replayOnboardingBtn").addEventListener("click", openOnboarding);
@@ -397,7 +395,6 @@ document.addEventListener(
   { passive: true }
 );
 
-// esconde a barra de baixo quando o teclado está aberto
 document.addEventListener("focusin", (event) => {
   if (event.target.matches("input, textarea")) {
     document.documentElement.classList.add("kb-open");
@@ -405,24 +402,19 @@ document.addEventListener("focusin", (event) => {
     setTimeout(() => el.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
   }
 });
-document.addEventListener("focusout", () => {
-  document.documentElement.classList.remove("kb-open");
-});
+document.addEventListener("focusout", () => document.documentElement.classList.remove("kb-open"));
 
 try {
   const AppPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
   if (AppPlugin && typeof AppPlugin.addListener === "function") {
     AppPlugin.addListener("backButton", () => {
       if (closeTopOverlay()) return;
-      if (currentScreen !== "home") {
-        showScreen("home");
-        return;
-      }
+      if (document.documentElement.classList.contains("state-app") && currentScreen !== "home") return showScreen("home");
       if (typeof AppPlugin.exitApp === "function") AppPlugin.exitApp();
     });
   }
 } catch {
-  /* fora do app (navegador) — sem botão voltar nativo */
+  /* fora do app (navegador) */
 }
 
 /* ---------------------------------------------------------
@@ -433,6 +425,10 @@ hydrateIcons();
 renderAppearance();
 renderMyIds();
 renderHistory();
+initAuthUI();
+initProfile();
+initNotifications();
 showScreen("home");
+applyState();
 
 if (!readRaw(KEYS.onboarded)) openOnboarding();
